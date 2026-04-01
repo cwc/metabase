@@ -26,6 +26,10 @@ RUN git config --global --add safe.directory /home/node
 # install bun for frontend dependencies
 RUN npm install -g bun
 
+# install uv for Python dependencies
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
+
 # install frontend dependencies
 RUN bun install --frozen-lockfile
 

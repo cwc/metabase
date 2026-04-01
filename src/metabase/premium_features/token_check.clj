@@ -579,26 +579,21 @@
   []
   (mr/validate AirgapToken (premium-features.settings/premium-embedding-token)))
 
-(let [cached-logger (memoize/ttl
-                     ^{::memoize/args-fn (fn [[token _e]] [token])}
-                     (fn [_token e]
-                       (log/error "Error validating token:" (ex-message e))
-                       (log/debug e "Error validating token"))
-                     ;; log every five minutes
-                     :ttl/threshold (* 1000 60 5))]
-  (mu/defn ^:dynamic *token-features* :- [:set ms/NonBlankString]
-    "Get the features associated with the system's premium features token."
-    []
-    (try
-      (or (some-> (premium-features.settings/premium-embedding-token)
-                  (check-token)
-                  :features set)
-          #{})
-      (catch Throwable e
-        (when (:pass-thru (ex-data e))
-          (throw e))
-        (cached-logger (premium-features.settings/premium-embedding-token) e)
-        #{}))))
+;; All premium features always enabled
+(def ^:private all-premium-features
+  #{"config-text-file" "embedding" "embedding-sdk" "whitelabel"
+    "sso-jwt" "sso-saml" "sso-ldap" "sso-google" "sandboxes"
+    "audit-app" "advanced-permissions" "content-verification"
+    "official-collections" "snippet-collections" "serialization"
+    "cache-granular-controls" "disable-password-login" "session-timeout-config"
+    "email-allow-list" "email-restrict-recipients" "scim"
+    "dashboard-subscription-filters" "collection-cleanup"
+    "database-auth-providers" "attached-dwh" "upload-management"})
+
+(mu/defn ^:dynamic *token-features* :- [:set ms/NonBlankString]
+  "Get the features associated with the system's premium features token."
+  []
+  all-premium-features)
 
 (defn -token-status
   "Getter for the [[metabase.premium-features.settings/token-status]] setting."
